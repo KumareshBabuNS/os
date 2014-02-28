@@ -1,60 +1,59 @@
-; hello-os
-; TAB=4
 
-		ORG		0x7c00			; ‚±‚ÌƒvƒƒOƒ‰ƒ€‚ª‚Ç‚±‚É“Ç‚Ýž‚Ü‚ê‚é‚Ì‚©
+        
+        org     0x7c00
+        
+        ;ä»¥ä¸‹æ˜¯fat12ç£ç›˜æ ¼å¼è®¾ç½®
+        jmp     entry
+    	DB		0x90
+		DB		"HELLOIPL"		
+		DW		512				
+		DB		1				
+		DW		1				
+		DB		2				
+		DW		224				
+		DW		2880			
+		DB		0xf0			
+		DW		9				
+		DW		18				
+		DW		2				
+		DD		0				
+		DD		2880			
+		DB		0,0,0x29		
+		DD		0xffffffff		
+		DB		"HELLO-OS   "	
+		DB		"FAT12   "		
+		RESB	18
 
-; ˆÈ‰º‚Í•W€“I‚ÈFAT12ƒtƒH[ƒ}ƒbƒgƒtƒƒbƒs[ƒfƒBƒXƒN‚Ì‚½‚ß‚Ì‹Lq
-
-		JMP		entry
-		DB		0x90
-		DB		"HELLOIPL"		; ƒu[ƒgƒZƒNƒ^‚Ì–¼‘O‚ðŽ©—R‚É‘‚¢‚Ä‚æ‚¢i8ƒoƒCƒgj
-		DW		512				; 1ƒZƒNƒ^‚Ì‘å‚«‚³i512‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DB		1				; ƒNƒ‰ƒXƒ^‚Ì‘å‚«‚³i1ƒZƒNƒ^‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DW		1				; FAT‚ª‚Ç‚±‚©‚çŽn‚Ü‚é‚©i•’Ê‚Í1ƒZƒNƒ^–Ú‚©‚ç‚É‚·‚éj
-		DB		2				; FAT‚ÌŒÂ”i2‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DW		224				; ƒ‹[ƒgƒfƒBƒŒƒNƒgƒŠ—Ìˆæ‚Ì‘å‚«‚³i•’Ê‚Í224ƒGƒ“ƒgƒŠ‚É‚·‚éj
-		DW		2880			; ‚±‚Ìƒhƒ‰ƒCƒu‚Ì‘å‚«‚³i2880ƒZƒNƒ^‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DB		0xf0			; ƒƒfƒBƒA‚Ìƒ^ƒCƒvi0xf0‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DW		9				; FAT—Ìˆæ‚Ì’·‚³i9ƒZƒNƒ^‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DW		18				; 1ƒgƒ‰ƒbƒN‚É‚¢‚­‚Â‚ÌƒZƒNƒ^‚ª‚ ‚é‚©i18‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DW		2				; ƒwƒbƒh‚Ì”i2‚É‚µ‚È‚¯‚ê‚Î‚¢‚¯‚È‚¢j
-		DD		0				; ƒp[ƒeƒBƒVƒ‡ƒ“‚ðŽg‚Á‚Ä‚È‚¢‚Ì‚Å‚±‚±‚Í•K‚¸0
-		DD		2880			; ‚±‚Ìƒhƒ‰ƒCƒu‘å‚«‚³‚ð‚à‚¤ˆê“x‘‚­
-		DB		0,0,0x29		; ‚æ‚­‚í‚©‚ç‚È‚¢‚¯‚Ç‚±‚Ì’l‚É‚µ‚Ä‚¨‚­‚Æ‚¢‚¢‚ç‚µ‚¢
-		DD		0xffffffff		; ‚½‚Ô‚ñƒ{ƒŠƒ…[ƒ€ƒVƒŠƒAƒ‹”Ô†
-		DB		"HELLO-OS   "	; ƒfƒBƒXƒN‚Ì–¼‘Oi11ƒoƒCƒgj
-		DB		"FAT12   "		; ƒtƒH[ƒ}ƒbƒg‚Ì–¼‘Oi8ƒoƒCƒgj
-		RESB	18				; ‚Æ‚è‚ ‚¦‚¸18ƒoƒCƒg‚ ‚¯‚Ä‚¨‚­
-
-; ƒvƒƒOƒ‰ƒ€–{‘Ì
-
+        ;è®¾ç½®æ®µå¯„å­˜å™¨
 entry:
-		MOV		AX,0			; ƒŒƒWƒXƒ^‰Šú‰»
-		MOV		SS,AX
-		MOV		SP,0x7c00
-		MOV		DS,AX
-		MOV		ES,AX
-
-		MOV		SI,msg
+        mov     ax, 0
+        mov     ss, ax
+        mov     sp, 0x7c00
+        mov     ds, ax
+        mov     es, ax
+        mov     si,  msg
+        ;æ˜¾ç¤ºå­—ç¬¦ä¸²
 putloop:
-		MOV		AL,[SI]
-		ADD		SI,1			; SI‚É1‚ð‘«‚·
-		CMP		AL,0
-		JE		fin
-		MOV		AH,0x0e			; ˆê•¶Žš•\Ž¦ƒtƒ@ƒ“ƒNƒVƒ‡ƒ“
-		MOV		BX,15			; ƒJƒ‰[ƒR[ƒh
-		INT		0x10			; ƒrƒfƒIBIOSŒÄ‚Ño‚µ
-		JMP		putloop
+        mov     al, [si]
+        add     si, 1
+        cmp     al, 0
+        je      fin
+        mov     ah, 0x0e
+        mov     bh, 0
+        mov     bl, 1
+        int     0x10
+        jmp     putloop
+        
+        ;å¾…æœº    
 fin:
-		HLT						; ‰½‚©‚ ‚é‚Ü‚ÅCPU‚ð’âŽ~‚³‚¹‚é
-		JMP		fin				; –³ŒÀƒ‹[ƒv
-
+        hlt
+        jmp     fin
+        ;å­—ç¬¦ä¸²ä¿¡æ¯,0ç»“å°¾
 msg:
-		DB		0x0a, 0x0a		; ‰üs‚ð2‚Â
-		DB		"hello, world"
-		DB		0x0a			; ‰üs
-		DB		0
-
-		RESB	0x7dfe-$		; 0x7dfe‚Ü‚Å‚ð0x00‚Å–„‚ß‚é–½—ß
-
-		DB		0x55, 0xaa
+        DB      0x0a, 0x0a
+        DB      "Hello egg!"
+        DB      0x0a
+        DB      0
+        ;å†™æ»¡512å­—èŠ‚ï¼Œç»„åŽæ˜¯0x55aaç»“å°¾
+        resb    0x7dfe-$
+        DB      0x55, 0xaa
