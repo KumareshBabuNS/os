@@ -19,7 +19,7 @@
 
 void io_hlt(void);
 void io_cli(void);
-void io_iosti(void);
+void io_stihlt(void);
 void io_out8(int port, int data);
 int io_load_eflags(void);
 void io_store_eflags(int eflags);
@@ -29,8 +29,11 @@ void init_screen(char *, int, int);
 void set_palette(int start,int end, unsigned char *rgb);
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
 
+/* 显示字符以及字符串 */
 void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
 void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s);
+void init_mouse_cursor8(char *mouse, char bc);
+void putblock8_8(char *vram, int vxsize, int pxsize, int pysize, int px0, int py0, char *buf, int bxsize);
 /* 开始执行的函数 */
 struct BOOTINFO
 {
@@ -47,14 +50,20 @@ void HariMain(void)
     char *vram = (char *)0xa0000;
     int xsize = 320;
     int ysize = 200;
-    
+    char mcursor[256];
+    int mx,my;
+
     init_palette();
     binfo = (struct BOOTINFO*)0x0ff0;
     xsize = binfo->scrnx;
     ysize = binfo->scrny;
     vram = binfo->vram;
+    mx = (binfo->scrnx - 16) / 2;
+    my = (binfo->scrny - 28 - 16) / 2;
     /* 描绘UI */
     init_screen(binfo->vram,binfo->scrnx,binfo->scrny);
+    init_mouse_cursor8(mcursor,COL8_008484);
+    putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 
     char str[100]; 
     sprintf(str,"%x xiaomengmeng",0x20);
@@ -75,6 +84,7 @@ void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
         temp = 0x80;
         counter = 0;
         
+        /* 移位检测像素 */
         while(temp>0)
         {
             if((d&temp) != 0)
@@ -169,4 +179,55 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
         }
 
     return;
+}
+
+void init_mouse_cursor8(char *mouse, char bc)
+/* 鼠标指针初始化 */
+{
+	static char cursor[16][16] = {
+		"**************..",
+		"*OOOOOOOOOOO*...",
+		"*OOOOOOOOOO*....",
+		"*OOOOOOOOO*.....",
+		"*OOOOOOOO*......",
+		"*OOOOOOO*.......",
+		"*OOOOOOO*.......",
+		"*OOOOOOOO*......",
+		"*OOOO**OOO*.....",
+		"*OOO*..*OOO*....",
+		"*OO*....*OOO*...",
+		"*O*......*OOO*..",
+		"**........*OOO*.",
+		"*..........*OOO*",
+		"............*OO*",
+		".............***"
+	};
+	int x, y;
+
+	for (y = 0; y < 16; y++) {
+		for (x = 0; x < 16; x++) {
+			if (cursor[y][x] == '*') {
+				mouse[y * 16 + x] = COL8_000000;
+			}
+			if (cursor[y][x] == 'O') {
+				mouse[y * 16 + x] = COL8_FFFFFF;
+			}
+			if (cursor[y][x] == '.') {
+				mouse[y * 16 + x] = bc;
+			}
+		}
+	}
+	return;
+}
+
+void putblock8_8(char *vram, int vxsize, int pxsize,
+	int pysize, int px0, int py0, char *buf, int bxsize)
+{
+	int x, y;
+	for (y = 0; y < pysize; y++) {
+		for (x = 0; x < pxsize; x++) {
+			vram[(py0 + y) * vxsize + (px0 + x)] = buf[y * bxsize + x];
+		}
+	}
+	return;
 }

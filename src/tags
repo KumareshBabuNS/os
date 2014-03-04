@@ -1,0 +1,55 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+COL8_000000	.\bootpack.c	2;"	d	file:
+COL8_000084	.\bootpack.c	14;"	d	file:
+COL8_0000FF	.\bootpack.c	6;"	d	file:
+COL8_008400	.\bootpack.c	12;"	d	file:
+COL8_008484	.\bootpack.c	16;"	d	file:
+COL8_00FF00	.\bootpack.c	4;"	d	file:
+COL8_00FFFF	.\bootpack.c	8;"	d	file:
+COL8_840000	.\bootpack.c	11;"	d	file:
+COL8_840084	.\bootpack.c	15;"	d	file:
+COL8_848400	.\bootpack.c	13;"	d	file:
+COL8_848484	.\bootpack.c	17;"	d	file:
+COL8_C6C6C6	.\bootpack.c	10;"	d	file:
+COL8_FF0000	.\bootpack.c	3;"	d	file:
+COL8_FF00FF	.\bootpack.c	7;"	d	file:
+COL8_FFFF00	.\bootpack.c	5;"	d	file:
+COL8_FFFFFF	.\bootpack.c	9;"	d	file:
+CYLS	.\ipl.asm	/^        CYLS    EQU     10$/;"	d
+_io_cli	.\naskfunc.asm	/^_io_cli:$/;"	l
+_io_hlt	.\naskfunc.asm	/^_io_hlt:	; void io_hlt(void);$/;"	l
+_io_in16	.\naskfunc.asm	/^_io_in16 :$/;"	l
+_io_in32	.\naskfunc.asm	/^_io_in32 :$/;"	l
+_io_in8	.\naskfunc.asm	/^_io_in8 :$/;"	l
+_io_load_eflags	.\naskfunc.asm	/^_io_load_eflags:$/;"	l
+_io_out16	.\naskfunc.asm	/^_io_out16 :$/;"	l
+_io_out8	.\naskfunc.asm	/^_io_out8 :$/;"	l
+_io_sti	.\naskfunc.asm	/^_io_sti:$/;"	l
+_io_stihlt	.\naskfunc.asm	/^_io_stihlt:$/;"	l
+_io_store_eflags	.\naskfunc.asm	/^_io_store_eflags:$/;"	l
+_write_mem8	.\naskfunc.asm	/^_write_mem8:$/;"	l
+boxfill8	.\bootpack.c	/^void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);$/;"	p	file:	signature:(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1)
+entry	.\ipl.asm	/^entry:$/;"	l
+error	.\ipl.asm	/^error:$/;"	l
+fin	.\ipl.asm	/^fin:$/;"	l
+init_palette	.\bootpack.c	/^void init_palette(void);$/;"	p	file:	signature:(void)
+init_screen	.\bootpack.c	/^void init_screen(char *, int, int);$/;"	p	file:	signature:(char *, int, int)
+io_cli	.\bootpack.c	/^void io_cli(void);$/;"	p	file:	signature:(void)
+io_hlt	.\bootpack.c	/^void io_hlt(void);$/;"	p	file:	signature:(void)
+io_load_eflags	.\bootpack.c	/^int io_load_eflags(void);$/;"	p	file:	signature:(void)
+io_out8	.\bootpack.c	/^void io_out8(int port, int data);$/;"	p	file:	signature:(int port, int data)
+io_stihlt	.\bootpack.c	/^void io_stihlt(void);$/;"	p	file:	signature:(void)
+io_store_eflags	.\bootpack.c	/^void io_store_eflags(int eflags);$/;"	p	file:	signature:(int eflags)
+msg	.\ipl.asm	/^msg:$/;"	l
+next	.\ipl.asm	/^next:$/;"	l
+putfont8	.\bootpack.c	/^void putfont8(char *vram, int xsize, int x, int y, char c, char *font);$/;"	p	file:	signature:(char *vram, int xsize, int x, int y, char c, char *font)
+putfont8_asc	.\bootpack.c	/^void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s);$/;"	p	file:	signature:(char *vram, int xsize, int x, int y, char c, char *s)
+putloop	.\ipl.asm	/^putloop:$/;"	l
+readloop	.\ipl.asm	/^readloop:$/;"	l
+retry	.\ipl.asm	/^retry:$/;"	l
+set_palette	.\bootpack.c	/^void set_palette(int start,int end, unsigned char *rgb);$/;"	p	file:	signature:(int start,int end, unsigned char *rgb)
