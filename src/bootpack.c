@@ -1,14 +1,4 @@
-/* 函数声明 */
-
-void io_hlt(void);
-void io_cli(void);
-void io_out8(int port, int data);
-int io_load_eflags(void);
-void io_store_eflags(int eflags);
-
-void init_palette(void);
-void set_palette(int start,int end, unsigned char *rgb);
-void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+#include<stdio.h>
 #define COL8_000000		0
 #define COL8_FF0000		1
 #define COL8_00FF00		2
@@ -25,17 +15,90 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 #define COL8_840084		13
 #define COL8_008484		14
 #define COL8_848484		15
+/* 函数声明 */
+
+void io_hlt(void);
+void io_cli(void);
+void io_iosti(void);
+void io_out8(int port, int data);
+int io_load_eflags(void);
+void io_store_eflags(int eflags);
+
+void init_palette(void);
+void init_screen(char *, int, int);
+void set_palette(int start,int end, unsigned char *rgb);
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
+void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s);
 /* 开始执行的函数 */
+struct BOOTINFO
+{
+    char cyls, leds, vmode, reserve;
+    short scrnx, scrny;
+    char *vram;
+};
 
 void HariMain(void)
 {
+    extern char hankaku[4096];
+    struct BOOTINFO *binfo;
     int i;
     char *vram = (char *)0xa0000;
     int xsize = 320;
     int ysize = 200;
     
     init_palette();
+    binfo = (struct BOOTINFO*)0x0ff0;
+    xsize = binfo->scrnx;
+    ysize = binfo->scrny;
+    vram = binfo->vram;
     /* 描绘UI */
+    init_screen(binfo->vram,binfo->scrnx,binfo->scrny);
+
+    char str[100]; 
+    sprintf(str,"%x xiaomengmeng",0x20);
+    putfont8_asc(binfo->vram,binfo->scrnx,10,10,COL8_FFFFFF,str);
+    for(;;)
+	    io_stihlt(); /* 执行naskfun.nas中的io_htl函数*/ 
+    //io_stihlt();
+}
+
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
+{
+    int i,temp,counter;
+    char d;
+
+    for(i = 0; i < 16; i++)
+    {
+        d = font[i];
+        temp = 0x80;
+        counter = 0;
+        
+        while(temp>0)
+        {
+            if((d&temp) != 0)
+                vram[(y+i)*xsize + x + counter] = c;
+
+            temp = temp >> 1;
+            counter++;
+        }
+
+    }
+}
+void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s)
+{
+    extern char hankaku[4096];
+    int i = 0;
+    for(; *s != '\0'; s++, i++)
+    {
+        putfont8(vram,xsize,x + i * 10,y,c,hankaku + *s * 16);
+
+    }
+}
+
+void init_screen(char *vram, int xsize, int ysize)
+{
     boxfill8(vram, xsize, COL8_008484,  0,         0,          xsize -  1, ysize - 29);
 	boxfill8(vram, xsize, COL8_C6C6C6,  0,         ysize - 28, xsize -  1, ysize - 28);
 	boxfill8(vram, xsize, COL8_FFFFFF,  0,         ysize - 27, xsize -  1, ysize - 27);
@@ -52,11 +115,8 @@ void HariMain(void)
 	boxfill8(vram, xsize, COL8_848484, xsize - 47, ysize - 23, xsize - 47, ysize -  4);
 	boxfill8(vram, xsize, COL8_FFFFFF, xsize - 47, ysize -  3, xsize -  4, ysize -  3);
 	boxfill8(vram, xsize, COL8_FFFFFF, xsize -  3, ysize - 24, xsize -  3, ysize -  3);
-    for(;;)
-	    io_stihlt(); /* 执行naskfun.nas中的io_htl函数*/ 
-
+    return;
 }
-
 void  init_palette(void)
 {
     static unsigned char table_rgb[16 * 3] = {
