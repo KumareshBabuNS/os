@@ -15,7 +15,7 @@
 #define COL8_840084		13
 #define COL8_008484		14
 #define COL8_848484		15
-/* º¯ÊıÉùÃ÷ */
+/* ÂºÂ¯ÃŠÃ½Ã‰Ã¹ÃƒÃ· */
 
 void io_hlt(void);
 void io_cli(void);
@@ -29,12 +29,32 @@ void init_screen(char *, int, int);
 void set_palette(int start,int end, unsigned char *rgb);
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
 
-/* ÏÔÊ¾×Ö·ûÒÔ¼°×Ö·û´® */
+/* ÃÃ”ÃŠÂ¾Ã—Ã–Â·Ã»Ã’Ã”Â¼Â°Ã—Ã–Â·Ã»Â´Â® */
 void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
 void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s);
 void init_mouse_cursor8(char *mouse, char bc);
 void putblock8_8(char *vram, int vxsize, int pxsize, int pysize, int px0, int py0, char *buf, int bxsize);
-/* ¿ªÊ¼Ö´ĞĞµÄº¯Êı */
+
+/* GDTÂºÃIDTÃ‰Ã¨Ã–Ãƒ */
+struct SEGMENT_DESCRIPTOR
+{
+    short limit_low, base_low;
+    char base_mid, access_right;
+    char limit_high, base_high;
+};
+
+struct GATE_DESCRIPTOR
+{
+   	short offset_low, selector;
+	char dw_count, access_right;
+	short offset_high;
+};
+void init_gdtidt();
+void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd,unsigned int limit, int base, int ar);
+void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
+void load_gdtr(int limit, int addr);
+void load_idtr(int limit, int addr);
+/* Â¿ÂªÃŠÂ¼Ã–Â´ÃÃÂµÃ„ÂºÂ¯ÃŠÃ½ */
 struct BOOTINFO
 {
     char cyls, leds, vmode, reserve;
@@ -60,7 +80,7 @@ void HariMain(void)
     vram = binfo->vram;
     mx = (binfo->scrnx - 16) / 2;
     my = (binfo->scrny - 28 - 16) / 2;
-    /* Ãè»æUI */
+    /* ÃƒÃ¨Â»Ã¦UI */
     init_screen(binfo->vram,binfo->scrnx,binfo->scrny);
     init_mouse_cursor8(mcursor,COL8_008484);
     putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
@@ -69,7 +89,7 @@ void HariMain(void)
     sprintf(str,"%x xiaomengmeng",0x20);
     putfont8_asc(binfo->vram,binfo->scrnx,10,10,COL8_FFFFFF,str);
     for(;;)
-	    io_stihlt(); /* Ö´ĞĞnaskfun.nasÖĞµÄio_htlº¯Êı*/ 
+	    io_stihlt(); /* Ã–Â´ÃÃnaskfun.nasÃ–ÃÂµÃ„io_htlÂºÂ¯ÃŠÃ½*/ 
     //io_stihlt();
 }
 
@@ -84,7 +104,7 @@ void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
         temp = 0x80;
         counter = 0;
         
-        /* ÒÆÎ»¼ì²âÏñËØ */
+        /* Ã’Ã†ÃÂ»Â¼Ã¬Â²Ã¢ÃÃ±Ã‹Ã˜ */
         while(temp>0)
         {
             if((d&temp) != 0)
@@ -130,22 +150,22 @@ void init_screen(char *vram, int xsize, int ysize)
 void  init_palette(void)
 {
     static unsigned char table_rgb[16 * 3] = {
-		0x00, 0x00, 0x00,	/*  0:ºÚ */
-		0xff, 0x00, 0x00,	/*  1:ºì */
-		0x00, 0xff, 0x00,	/*  2:ÂÌ */
-		0xff, 0xff, 0x00,	/*  3:»Æ */
-		0x00, 0x00, 0xff,	/*  4:À¶ */
-		0xff, 0x00, 0xff,	/*  5:×Ï */
-		0x00, 0xff, 0xff,	/*  6:Ç³À¶ */
-		0xff, 0xff, 0xff,	/*  7:°× */
-		0xc6, 0xc6, 0xc6,	/*  8:»Ò */
-		0x84, 0x00, 0x00,	/*  9:°µºì */
-		0x00, 0x84, 0x00,	/* 10:°µÂÌ */
-		0x84, 0x84, 0x00,	/* 11:°µ»Æ */
-		0x00, 0x00, 0x84,	/* 12:°µÇà */
-		0x84, 0x00, 0x84,	/* 13:°µ×Ï */
-		0x00, 0x84, 0x84,	/* 14:Ç³°µÀ¶ */
-		0x84, 0x84, 0x84	/* 15:°µ»Ò */
+		0x00, 0x00, 0x00,	/*  0:ÂºÃš */
+		0xff, 0x00, 0x00,	/*  1:ÂºÃ¬ */
+		0x00, 0xff, 0x00,	/*  2:Ã‚ÃŒ */
+		0xff, 0xff, 0x00,	/*  3:Â»Ã† */
+		0x00, 0x00, 0xff,	/*  4:Ã€Â¶ */
+		0xff, 0x00, 0xff,	/*  5:Ã—Ã */
+		0x00, 0xff, 0xff,	/*  6:Ã‡Â³Ã€Â¶ */
+		0xff, 0xff, 0xff,	/*  7:Â°Ã— */
+		0xc6, 0xc6, 0xc6,	/*  8:Â»Ã’ */
+		0x84, 0x00, 0x00,	/*  9:Â°ÂµÂºÃ¬ */
+		0x00, 0x84, 0x00,	/* 10:Â°ÂµÃ‚ÃŒ */
+		0x84, 0x84, 0x00,	/* 11:Â°ÂµÂ»Ã† */
+		0x00, 0x00, 0x84,	/* 12:Â°ÂµÃ‡Ã  */
+		0x84, 0x00, 0x84,	/* 13:Â°ÂµÃ—Ã */
+		0x00, 0x84, 0x84,	/* 14:Ã‡Â³Â°ÂµÃ€Â¶ */
+		0x84, 0x84, 0x84	/* 15:Â°ÂµÂ»Ã’ */
 	};
     set_palette(0,15,table_rgb);
     return;
@@ -168,7 +188,7 @@ void set_palette(int start, int end, unsigned char *rgb)
     return;
 }
 
-/* Ãè»æ¾ØĞÎ */
+/* ÃƒÃ¨Â»Ã¦Â¾Ã˜ÃÃ */
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1)
 {
     int i,j;
@@ -182,7 +202,7 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 }
 
 void init_mouse_cursor8(char *mouse, char bc)
-/* Êó±êÖ¸Õë³õÊ¼»¯ */
+/* ÃŠÃ³Â±ÃªÃ–Â¸Ã•Ã«Â³ÃµÃŠÂ¼Â»Â¯ */
 {
 	static char cursor[16][16] = {
 		"**************..",
@@ -230,4 +250,58 @@ void putblock8_8(char *vram, int vxsize, int pxsize,
 		}
 	}
 	return;
+}
+
+void init_gdtidt(void)
+{
+    struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR*) 0x00270000;
+    struct GATE_DESCRIPTOR *idt = (struct GATE_DESCRIPTOR*) 0x0026f800;
+    int i;
+
+    /* Set gdt */
+    for (i = 0; i < 8192; ++i)
+    {
+        /* code */
+        set_segmdesc(gdt+i, 0, 0, 0);
+    }
+    set_segmdesc(gdt+1, 0xffffffff, 0x00000000, 0x4092);
+    set_segmdesc(gdt+2, 0x0007ffff, 0x00280000, 0x409a);
+    load_gdtr(0xffff, 0x00270000);
+
+    /* set idt*/
+    for (i = 0; i < 256; ++i)
+    {
+        /* code */
+        set_gatedesc(idt+i, 0, 0, 0);
+    }
+    load_idtr(0x7ff, 0x0026f800);
+    return;
+}
+
+void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar)
+{
+    if (limit > 0xfffff)
+    {
+        /* code */
+        ar |= 0x8000;
+        limit /= 0x1000;
+    }
+
+    sd->limit_low   = limit & 0xffff;
+    sd->base_low    = base & 0xffff;
+    sd->base_mid    = (base >> 16) & 0xff;
+    sd->access_right= ar & 0xff;
+    sd->limit_high  = ((limit >> 16) & 0xffff) | ((ar >> 8) & 0xf0);
+    sd->base_high   = (base >> 24) & 0xff;
+    return;
+}
+
+void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar)
+{
+    gd->offset_low   = offset & 0xffff;
+    gd->selector     = selector;
+    gd->dw_count     = (ar >> 8) & 0xff;
+    gd->access_right = ar & 0xff;
+    gd->offset_high  = (offset >> 16) & 0xffff;
+    return;
 }

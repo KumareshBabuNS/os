@@ -14,6 +14,7 @@
         GLOBAL  _io_in8,_io_in16,_io_in32
         GLOBAL  _io_out8,_io_out16,_io_out32
         GLOBAL  _io_load_eflags,_io_store_eflags
+        GLOBAL  _load_gdtr,_load_idtr
         GLOBAL  _write_mem8		
 
 ;єЇКэМе
@@ -87,6 +88,19 @@ _io_store_eflags:
         mov     eax, [esp+4]
         push    eax
         popfd
+        ret
+
+; void load_gdtr(int limit, int data)
+_load_gdtr:
+        mov     ax, [esp+4]
+        mov     [esp+6], ax
+        lgdt    [esp+6]
+        ret
+; void load_idtr(int limit, int data)
+_load_idtr:
+        mov     ax, [esp+4]
+        mov     [esp+6], ax
+        lidt    [esp+6]
         ret
 
 _write_mem8:
