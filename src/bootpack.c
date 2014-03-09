@@ -1,72 +1,8 @@
-#include<stdio.h>
-#define COL8_000000		0
-#define COL8_FF0000		1
-#define COL8_00FF00		2
-#define COL8_FFFF00		3
-#define COL8_0000FF		4
-#define COL8_FF00FF		5
-#define COL8_00FFFF		6
-#define COL8_FFFFFF		7
-#define COL8_C6C6C6		8
-#define COL8_840000		9
-#define COL8_008400		10
-#define COL8_848400		11
-#define COL8_000084		12
-#define COL8_840084		13
-#define COL8_008484		14
-#define COL8_848484		15
-/* º¯ÊýÉùÃ÷ */
-
-void io_hlt(void);
-void io_cli(void);
-void io_stihlt(void);
-void io_out8(int port, int data);
-int io_load_eflags(void);
-void io_store_eflags(int eflags);
-
-void init_palette(void);
-void init_screen(char *, int, int);
-void set_palette(int start,int end, unsigned char *rgb);
-void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
-
-/* ÏÔÊ¾×Ö·ûÒÔ¼°×Ö·û´® */
-void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
-void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s);
-void init_mouse_cursor8(char *mouse, char bc);
-void putblock8_8(char *vram, int vxsize, int pxsize, int pysize, int px0, int py0, char *buf, int bxsize);
-
-/* GDTºÍIDTÉèÖÃ */
-struct SEGMENT_DESCRIPTOR
-{
-    short limit_low, base_low;
-    char base_mid, access_right;
-    char limit_high, base_high;
-};
-
-struct GATE_DESCRIPTOR
-{
-   	short offset_low, selector;
-	char dw_count, access_right;
-	short offset_high;
-};
-void init_gdtidt();
-void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd,unsigned int limit, int base, int ar);
-void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
-void load_gdtr(int limit, int addr);
-void load_idtr(int limit, int addr);
-/* ¿ªÊ¼Ö´ÐÐµÄº¯Êý */
-struct BOOTINFO
-{
-    char cyls, leds, vmode, reserve;
-    short scrnx, scrny;
-    char *vram;
-};
+#include "bootpack.h"
 
 void HariMain(void)
 {
-    extern char hankaku[4096];
     struct BOOTINFO *binfo;
-    int i;
     char *vram = (char *)0xa0000;
     int xsize = 320;
     int ysize = 200;
@@ -74,6 +10,8 @@ void HariMain(void)
     int mx,my;
 
     init_palette();
+    init_gdtidt();
+    init_pic();
     binfo = (struct BOOTINFO*)0x0ff0;
     xsize = binfo->scrnx;
     ysize = binfo->scrny;
@@ -85,9 +23,13 @@ void HariMain(void)
     init_mouse_cursor8(mcursor,COL8_008484);
     putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 
-    char str[100]; 
-    sprintf(str,"%x xiaomengmeng",0x20);
-    putfont8_asc(binfo->vram,binfo->scrnx,10,10,COL8_FFFFFF,str);
+    // char str[100]; 
+    // sprintf(str,"%x xiaomengmeng",0x20);
+    // putfont8_asc(binfo->vram,binfo->scrnx,10,10,COL8_FFFFFF,str);
+
+    io_out8(PIC0_IMR, 0xf9);  /* 允许1号键盘中断和2号来自从PIC的中断 */
+    io_out8(PIC1_IMR, 0xef);  /* 允许12号鼠标中断信号 */
+
     for(;;)
 	    io_stihlt(); /* Ö´ÐÐnaskfun.nasÖÐµÄio_htlº¯Êý*/ 
     //io_stihlt();
@@ -122,7 +64,7 @@ void putfont8_asc(char *vram, int xsize, int x, int y, char c, char *s)
     int i = 0;
     for(; *s != '\0'; s++, i++)
     {
-        putfont8(vram,xsize,x + i * 10,y,c,hankaku + *s * 16);
+        putfont8(vram,xsize,x + i * 8,y,c,hankaku + *s * 16);
 
     }
 }
@@ -188,7 +130,7 @@ void set_palette(int start, int end, unsigned char *rgb)
     return;
 }
 
-/* Ãè»æ¾ØÐÎ */
+/* 描绘矩形 */
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1)
 {
     int i,j;
@@ -264,16 +206,19 @@ void init_gdtidt(void)
         /* code */
         set_segmdesc(gdt+i, 0, 0, 0);
     }
-    set_segmdesc(gdt+1, 0xffffffff, 0x00000000, 0x4092);
-    set_segmdesc(gdt+2, 0x0007ffff, 0x00280000, 0x409a);
+    set_segmdesc(gdt + 1, 0xffffffff, 0x00000000, 0x4092);
+    set_segmdesc(gdt + 2, LIMIT_BOTPAK, ADR_BOTPAK, AR_CODE32_ER);
     load_gdtr(0xffff, 0x00270000);
 
-    /* set idt*/
+    /* set idt 设置*/
     for (i = 0; i < 256; ++i)
     {
         /* code */
         set_gatedesc(idt+i, 0, 0, 0);
     }
+    set_gatedesc(idt + 0x21, (int) asm_inthandler21, 2 << 3, AR_INTGATE32);
+    set_gatedesc(idt + 0x27, (int) asm_inthandler27, 2 << 3, AR_INTGATE32);
+    set_gatedesc(idt + 0x2c, (int) asm_inthandler2c, 2 << 3, AR_INTGATE32);
     load_idtr(0x7ff, 0x0026f800);
     return;
 }
@@ -303,5 +248,57 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar)
     gd->dw_count     = (ar >> 8) & 0xff;
     gd->access_right = ar & 0xff;
     gd->offset_high  = (offset >> 16) & 0xffff;
+    return;
+}
+
+/*************** int.c ******************/
+void init_pic()
+{
+    io_out8(PIC0_IMR,  0xff  ); /* 禁止所有中断 */
+    io_out8(PIC1_IMR,  0xff  ); /* 禁止所有中断 */
+
+    io_out8(PIC0_ICW1, 0x11  ); /* 电气属性：边沿触发(猜测是上升沿) */
+    io_out8(PIC0_ICW2, 0x20  ); /* IRQ0-7由INT20-27接收 */
+    io_out8(PIC0_ICW3, 1 << 2); /* PIC1由IRQ2接收 */
+    io_out8(PIC0_ICW4, 0x01  ); /* 无缓冲区 */
+
+    io_out8(PIC1_ICW1, 0x11  ); /* 电气属性：边沿触发(猜测是上升沿) */
+    io_out8(PIC1_ICW2, 0x28  ); /* IRQ8-15由INT28-2f接收 */
+    io_out8(PIC1_ICW3, 2     ); /* PIC1由IRQ2接收 */
+    io_out8(PIC1_ICW4, 0x01  ); /* 无缓冲区 */
+
+    io_out8(PIC0_IMR,  0xfb  ); /* 11111011 PIC1以外中断全部禁止 */
+    io_out8(PIC1_IMR,  0xff  ); /* 11111111 禁止所有中断 */
+
+    return;
+}
+
+void inthandler21(int *esp)
+{
+    /* 键盘中断处理函数 */
+    struct BOOTINFO *binfo = (struct BOOTINFO*) ADR_BOOTINFO;
+    boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
+    putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 21 (IRQ-1) : PS/2 keyboard");
+    for (;;)
+    {
+        /* code */
+        io_hlt();
+    }
+}
+
+void inthandler2c(int *esp)
+{
+    /* 鼠标中断处理函数 */
+    struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
+    boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
+    putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 2C (IRQ-12) : PS/2 mouse");
+    for (;;) {
+        io_hlt();
+    }
+}
+
+void inthandler27(int *esp)                                
+{
+    io_out8(PIC0_OCW2, 0x67); /* 兼容性设置 */
     return;
 }

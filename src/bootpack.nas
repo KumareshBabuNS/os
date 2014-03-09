@@ -3,19 +3,19 @@
 [OPTIMIZE 1]
 [OPTION 1]
 [BITS 32]
-	EXTERN	_sprintf
+	EXTERN	_io_out8
 	EXTERN	_io_stihlt
 	EXTERN	_hankaku
 	EXTERN	_io_load_eflags
 	EXTERN	_io_cli
-	EXTERN	_io_out8
 	EXTERN	_io_store_eflags
 	EXTERN	_load_gdtr
+	EXTERN	_asm_inthandler21
+	EXTERN	_asm_inthandler27
+	EXTERN	_asm_inthandler2c
 	EXTERN	_load_idtr
+	EXTERN	_io_hlt
 [FILE "bootpack.c"]
-[SECTION .data]
-LC0:
-	DB	"%x xiaomengmeng",0x00
 [SECTION .text]
 	GLOBAL	_HariMain
 _HariMain:
@@ -23,28 +23,29 @@ _HariMain:
 	MOV	EBP,ESP
 	PUSH	EDI
 	PUSH	ESI
-	MOV	ESI,2
 	PUSH	EBX
-	SUB	ESP,376
+	MOV	EBX,2
+	SUB	ESP,264
 	CALL	_init_palette
+	CALL	_init_gdtidt
+	CALL	_init_pic
 	MOVSX	EAX,WORD [4084]
-	MOVSX	EDX,WORD [4086]
+	MOVSX	ESI,WORD [4086]
 	LEA	ECX,DWORD [-16+EAX]
-	MOV	DWORD [-384+EBP],EDX
+	PUSH	ESI
 	MOV	EAX,ECX
-	MOV	EBX,DWORD [-384+EBP]
+	MOV	ECX,2
 	CDQ
-	IDIV	ESI
-	SUB	EBX,44
+	IDIV	EBX
+	LEA	EBX,DWORD [-44+ESI]
 	MOV	EDI,EAX
 	MOV	EAX,EBX
-	CDQ
-	IDIV	ESI
-	PUSH	DWORD [-384+EBP]
-	MOV	EBX,EAX
 	LEA	ESI,DWORD [-268+EBP]
-	MOVSX	EAX,WORD [4084]
-	PUSH	EAX
+	CDQ
+	IDIV	ECX
+	MOVSX	EDX,WORD [4084]
+	PUSH	EDX
+	MOV	EBX,EAX
 	PUSH	DWORD [4088]
 	CALL	_init_screen
 	PUSH	14
@@ -53,28 +54,21 @@ _HariMain:
 	PUSH	16
 	PUSH	ESI
 	PUSH	EBX
-	LEA	EBX,DWORD [-380+EBP]
 	PUSH	EDI
 	PUSH	16
 	PUSH	16
-	MOVSX	EAX,WORD [4084]
-	PUSH	EAX
+	MOVSX	EDX,WORD [4084]
+	PUSH	EDX
 	PUSH	DWORD [4088]
 	CALL	_putblock8_8
 	ADD	ESP,52
-	PUSH	32
-	PUSH	LC0
-	PUSH	EBX
-	CALL	_sprintf
-	PUSH	EBX
-	PUSH	7
-	PUSH	10
-	PUSH	10
-	MOVSX	EAX,WORD [4084]
-	PUSH	EAX
-	PUSH	DWORD [4088]
-	CALL	_putfont8_asc
-	ADD	ESP,36
+	PUSH	249
+	PUSH	33
+	CALL	_io_out8
+	PUSH	239
+	PUSH	161
+	CALL	_io_out8
+	ADD	ESP,16
 L2:
 	CALL	_io_stihlt
 	JMP	L2
@@ -150,7 +144,7 @@ L25:
 	PUSH	EAX
 	PUSH	EDI
 	PUSH	ESI
-	ADD	ESI,10
+	ADD	ESI,8
 	PUSH	DWORD [12+EBP]
 	PUSH	DWORD [8+EBP]
 	CALL	_putfont8
@@ -647,6 +641,22 @@ L99:
 	ADD	ESP,16
 	DEC	EBX
 	JNS	L99
+	PUSH	142
+	PUSH	16
+	PUSH	_asm_inthandler21
+	PUSH	2554120
+	CALL	_set_gatedesc
+	PUSH	142
+	PUSH	16
+	PUSH	_asm_inthandler27
+	PUSH	2554168
+	CALL	_set_gatedesc
+	ADD	ESP,32
+	PUSH	142
+	PUSH	16
+	PUSH	_asm_inthandler2c
+	PUSH	2554208
+	CALL	_set_gatedesc
 	PUSH	2553856
 	PUSH	2047
 	CALL	_load_idtr
@@ -703,4 +713,115 @@ _set_gatedesc:
 	MOV	WORD [6+EDX],CX
 	POP	EBX
 	POP	EBP
+	RET
+	GLOBAL	_init_pic
+_init_pic:
+	PUSH	EBP
+	MOV	EBP,ESP
+	PUSH	255
+	PUSH	33
+	CALL	_io_out8
+	PUSH	255
+	PUSH	161
+	CALL	_io_out8
+	PUSH	17
+	PUSH	32
+	CALL	_io_out8
+	PUSH	32
+	PUSH	33
+	CALL	_io_out8
+	ADD	ESP,32
+	PUSH	4
+	PUSH	33
+	CALL	_io_out8
+	PUSH	1
+	PUSH	33
+	CALL	_io_out8
+	PUSH	17
+	PUSH	160
+	CALL	_io_out8
+	PUSH	40
+	PUSH	161
+	CALL	_io_out8
+	ADD	ESP,32
+	PUSH	2
+	PUSH	161
+	CALL	_io_out8
+	PUSH	1
+	PUSH	161
+	CALL	_io_out8
+	PUSH	251
+	PUSH	33
+	CALL	_io_out8
+	PUSH	255
+	PUSH	161
+	CALL	_io_out8
+	LEAVE
+	RET
+[SECTION .data]
+LC0:
+	DB	"INT 21 (IRQ-1) : PS/2 keyboard",0x00
+[SECTION .text]
+	GLOBAL	_inthandler21
+_inthandler21:
+	PUSH	EBP
+	MOV	EBP,ESP
+	PUSH	15
+	PUSH	255
+	PUSH	0
+	PUSH	0
+	PUSH	0
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_boxfill8
+	PUSH	LC0
+	PUSH	7
+	PUSH	0
+	PUSH	0
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_putfont8_asc
+	ADD	ESP,52
+L109:
+	CALL	_io_hlt
+	JMP	L109
+[SECTION .data]
+LC1:
+	DB	"INT 2C (IRQ-12) : PS/2 mouse",0x00
+[SECTION .text]
+	GLOBAL	_inthandler2c
+_inthandler2c:
+	PUSH	EBP
+	MOV	EBP,ESP
+	PUSH	15
+	PUSH	255
+	PUSH	0
+	PUSH	0
+	PUSH	0
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_boxfill8
+	PUSH	LC1
+	PUSH	7
+	PUSH	0
+	PUSH	0
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_putfont8_asc
+	ADD	ESP,52
+L113:
+	CALL	_io_hlt
+	JMP	L113
+	GLOBAL	_inthandler27
+_inthandler27:
+	PUSH	EBP
+	MOV	EBP,ESP
+	PUSH	103
+	PUSH	32
+	CALL	_io_out8
+	LEAVE
 	RET

@@ -16,102 +16,146 @@
     16 00000000                                         GLOBAL  _io_load_eflags,_io_store_eflags
     17 00000000                                         GLOBAL  _load_gdtr,_load_idtr
     18 00000000                                         GLOBAL  _write_mem8		
-    19 00000000                                 
-    20 00000000                                 ;函数体
+    19 00000000                                         GLOBAL  _asm_inthandler21,_asm_inthandler27,_asm_inthandler2c
+    20 00000000                                         EXTERN  _inthandler21,_inthandler27,_inthandler2c
     21 00000000                                 
-    22                                          [SECTION .text]		;目标文件中写了这些后再写程序
+    22 00000000                                 ;函数体
     23 00000000                                 
-    24 00000000                                 _io_hlt:	; void io_hlt(void);
-    25 00000000 F4                              		HLT
-    26 00000001 C3                              		RET
-    27 00000002                                 
-    28 00000002                                 ;屏蔽中断 void io_cli(void);
-    29 00000002                                 _io_cli:
-    30 00000002                                         clt
-    31 00000002 C3                                      ret
-    32 00000003                                 ; void io_sti(void);  取消中断屏蔽
-    33 00000003                                 _io_sti:
-    34 00000003 FB                                      sti
-    35 00000004 C3                                      ret
-    36 00000005                                 ; void io_stihlt(void) 待机等待中断唤醒
-    37 00000005                                 _io_stihlt:
-    38 00000005 FB                                      sti
-    39 00000006                                         htl
-    40 00000006 C3                                      ret
-    41 00000007                                         
-    42 00000007                                     ; 输入输出函数 ;
+    24                                          [SECTION .text]		;目标文件中写了这些后再写程序
+    25 00000000                                 
+    26 00000000                                 _io_hlt:	; void io_hlt(void);
+    27 00000000 F4                              		HLT
+    28 00000001 C3                              		RET
+    29 00000002                                 
+    30 00000002                                 ;屏蔽中断 void io_cli(void);
+    31 00000002                                 _io_cli:
+    32 00000002                                         clt
+    33 00000002 C3                                      ret
+    34 00000003                                 ; void io_sti(void);  取消中断屏蔽
+    35 00000003                                 _io_sti:
+    36 00000003 FB                                      sti
+    37 00000004 C3                                      ret
+    38 00000005                                 ; void io_stihlt(void) 待机等待中断唤醒
+    39 00000005                                 _io_stihlt:
+    40 00000005 FB                                      sti
+    41 00000006                                         htl
+    42 00000006 C3                                      ret
     43 00000007                                         
-    44 00000007                                 ; int io_in8(int port);
-    45 00000007                                 _io_in8 :
-      >> [ERROR #001] syntax error.
-    46 00000007 8B 54 24 04                             mov     edx, [esp+4]
-    47 0000000B B8 00000000                             mov     eax, 0
-    48 00000010 EC                                      in      al, dx
-    49 00000011 C3                                      ret
-    50 00000012                                 ; int io_in16(int port);
-    51 00000012                                 _io_in16 :
-      >> [ERROR #001] syntax error.
-    52 00000012 8B 54 24 04                             mov     edx, [esp+4]
-    53 00000016 B8 00000000                             mov     eax, 0
-    54 0000001B 66 ED                                   in      ax, dx
-    55 0000001D C3                                      ret
-    56 0000001E                                 ; int io_in32(int port);
-    57 0000001E                                 _io_in32 :
-      >> [ERROR #001] syntax error.
-    58 0000001E 8B 54 24 04                             mov     edx, [esp+4]
-    59 00000022 B8 00000000                             mov     eax, 0
-    60 00000027 ED                                      in      eax, dx
-    61 00000028 C3                                      ret
-    62 00000029                                 ; void io_out8(int port,int data);
-    63 00000029                                 _io_out8 :
-      >> [ERROR #001] syntax error.
-    64 00000029 8B 54 24 04                             mov     edx, [esp+4]
-    65 0000002D 8A 44 24 08                             mov     al, [esp+8]
-    66 00000031 EE                                      out     dx, al
-    67 00000032 C3                                      ret
-    68 00000033                                 ; void io_out16(int port,int data);
-    69 00000033                                 _io_out16 :
-      >> [ERROR #001] syntax error.
-    70 00000033 8B 54 24 04                             mov     edx, [esp+4]
-    71 00000037 66 8B 44 24 08                          mov     ax, [esp+8]
-    72 0000003C 66 EF                                   out     dx, ax
-    73 0000003E C3                                      ret
-    74 0000003F                                 ; void io_out32(int port,int data);
-    75 0000003F                                 _io_out8 :
+    44 00000007                                     ; 输入输出函数 ;
+    45 00000007                                         
+    46 00000007                                 ; int io_in8(int port);
+    47 00000007                                 _io_in8:
+    48 00000007 8B 54 24 04                             mov     edx, [esp+4]
+    49 0000000B B8 00000000                             mov     eax, 0
+    50 00000010 EC                                      in      al, dx
+    51 00000011 C3                                      ret
+    52 00000012                                 ; int io_in16(int port);
+    53 00000012                                 _io_in16:
+    54 00000012 8B 54 24 04                             mov     edx, [esp+4]
+    55 00000016 B8 00000000                             mov     eax, 0
+    56 0000001B 66 ED                                   in      ax, dx
+    57 0000001D C3                                      ret
+    58 0000001E                                 ; int io_in32(int port);
+    59 0000001E                                 _io_in32:
+    60 0000001E 8B 54 24 04                             mov     edx, [esp+4]
+    61 00000022 B8 00000000                             mov     eax, 0
+    62 00000027 ED                                      in      eax, dx
+    63 00000028 C3                                      ret
+    64 00000029                                 ; void io_out8(int port,int data);
+    65 00000029                                 _io_out8:
+    66 00000029 8B 54 24 04                             mov     edx, [esp+4]
+    67 0000002D 8A 44 24 08                             mov     al, [esp+8]
+    68 00000031 EE                                      out     dx, al
+    69 00000032 C3                                      ret
+    70 00000033                                 ; void io_out16(int port,int data);
+    71 00000033                                 _io_out16:
+    72 00000033 8B 54 24 04                             mov     edx, [esp+4]
+    73 00000037 66 8B 44 24 08                          mov     ax, [esp+8]
+    74 0000003C 66 EF                                   out     dx, ax
+    75 0000003E C3                                      ret
+    76 0000003F                                 ; void io_out32(int port,int data);
+    77 0000003F                                 _io_out8:
       >> [ERROR #007] label definition error.
-    76 0000003F 8B 54 24 04                             mov     edx, [esp+4]
-    77 00000043 8B 44 24 08                             mov     eax, [esp+8]
-    78 00000047 EF                                      out     dx, eax
-    79 00000048 C3                                      ret
-    80 00000049                                 
-    81 00000049                                 ; int io_load_eflags();
-    82 00000049                                 _io_load_eflags:
-    83 00000049 9C                                      pushfd
-    84 0000004A 58                                      pop     eax
-    85 0000004B C3                                      ret
-    86 0000004C                                 ; void io_store_eflags();
-    87 0000004C                                 _io_store_eflags:
-    88 0000004C 8B 44 24 04                             mov     eax, [esp+4]
-    89 00000050 50                                      push    eax
-    90 00000051 9D                                      popfd
-    91 00000052 C3                                      ret
-    92 00000053                                 
-    93 00000053                                 ; void load_gdtr(int limit, int data)
-    94 00000053                                 _load_gdtr:
-    95 00000053 66 8B 44 24 04                          mov     ax, [esp+4]
-    96 00000058 66 89 44 24 06                          mov     [esp+6], ax
-    97 0000005D 0F 01 54 24 06                          lgdt    [esp+6]
-    98 00000062 C3                                      ret
-    99 00000063                                 ; void load_idtr(int limit, int data)
-   100 00000063                                 _load_idtr:
-   101 00000063 66 8B 44 24 04                          mov     ax, [esp+4]
-   102 00000068 66 89 44 24 06                          mov     [esp+6], ax
-   103 0000006D 0F 01 5C 24 06                          lidt    [esp+6]
-   104 00000072 C3                                      ret
-   105 00000073                                 
-   106 00000073                                 _write_mem8:
-   107 00000073 8B 4C 24 04                             mov     ecx, [esp+4]
-   108 00000077 8A 44 24 08                             mov     al, [esp+8]
-   109 0000007B 88 01                                   mov     [ecx], al
-   110 0000007D C3                                      ret
-   111 0000007E                                 
+    78 0000003F 8B 54 24 04                             mov     edx, [esp+4]
+    79 00000043 8B 44 24 08                             mov     eax, [esp+8]
+    80 00000047 EF                                      out     dx, eax
+    81 00000048 C3                                      ret
+    82 00000049                                 
+    83 00000049                                 ; int io_load_eflags();
+    84 00000049                                 _io_load_eflags:
+    85 00000049 9C                                      pushfd
+    86 0000004A 58                                      pop     eax
+    87 0000004B C3                                      ret
+    88 0000004C                                 ; void io_store_eflags();
+    89 0000004C                                 _io_store_eflags:
+    90 0000004C 8B 44 24 04                             mov     eax, [esp+4]
+    91 00000050 50                                      push    eax
+    92 00000051 9D                                      popfd
+    93 00000052 C3                                      ret
+    94 00000053                                 
+    95 00000053                                 ; void load_gdtr(int limit, int data)
+    96 00000053                                 _load_gdtr:
+    97 00000053 66 8B 44 24 04                          mov     ax, [esp+4]
+    98 00000058 66 89 44 24 06                          mov     [esp+6], ax
+    99 0000005D 0F 01 54 24 06                          lgdt    [esp+6]
+   100 00000062 C3                                      ret
+   101 00000063                                 ; void load_idtr(int limit, int data)
+   102 00000063                                 _load_idtr:
+   103 00000063 66 8B 44 24 04                          mov     ax, [esp+4]
+   104 00000068 66 89 44 24 06                          mov     [esp+6], ax
+   105 0000006D 0F 01 5C 24 06                          lidt    [esp+6]
+   106 00000072 C3                                      ret
+   107 00000073                                 
+   108 00000073                                 _write_mem8:
+   109 00000073 8B 4C 24 04                             mov     ecx, [esp+4]
+   110 00000077 8A 44 24 08                             mov     al, [esp+8]
+   111 0000007B 88 01                                   mov     [ecx], al
+   112 0000007D C3                                      ret
+   113 0000007E                                 
+   114 0000007E                                 _asm_inthandler21:
+   115 0000007E 06                                      push    es
+   116 0000007F 1E                                      push    ds
+   117 00000080 60                                      pushad
+   118 00000081 89 E0                                   mov     eax, esp
+   119 00000083 50                                      push    eax
+   120 00000084 66 8C D0                                mov     ax, ss
+   121 00000087 8E D8                                   mov     ds, ax
+   122 00000089 8E C0                                   mov     es, ax
+   123 0000008B E8 [00000000]                           call    _inthandler21
+   124 00000090 58                                      pop     eax
+   125 00000091 61                                      popad
+   126 00000092 1F                                      pop     ds
+   127 00000093 07                                      pop     es
+   128 00000094 CF                                      iretd
+   129 00000095                                 
+   130 00000095                                 _asm_inthandler27:
+   131 00000095 06                                      push    es
+   132 00000096 1E                                      push    ds
+   133 00000097 60                                      pushad
+   134 00000098 89 E0                                   mov     eax, esp
+   135 0000009A 50                                      push    eax
+   136 0000009B 66 8C D0                                mov     ax, ss
+   137 0000009E 8E D8                                   mov     ds, ax
+   138 000000A0 8E C0                                   mov     es, ax
+   139 000000A2 E8 [00000000]                           call    _inthandler27
+   140 000000A7 58                                      pop     eax
+   141 000000A8 61                                      popad
+   142 000000A9 1F                                      pop     ds
+   143 000000AA 07                                      pop     es
+   144 000000AB CF                                      iretd
+   145 000000AC                                 
+   146 000000AC                                 _asm_inthandler2c:
+   147 000000AC 06                                      push    es
+   148 000000AD 1E                                      push    ds
+   149 000000AE 60                                      pushad
+   150 000000AF 89 E0                                   mov     eax, esp
+   151 000000B1 50                                      push    eax
+   152 000000B2 66 8C D0                                mov     ax, ss
+   153 000000B5 8E D8                                   mov     ds, ax
+   154 000000B7 8E C0                                   mov     es, ax
+   155 000000B9 E8 [00000000]                           call    _inthandler2c
+   156 000000BE 58                                      pop     eax
+   157 000000BF 61                                      popad
+   158 000000C0 1F                                      pop     ds
+   159 000000C1 07                                      pop     es
+   160 000000C2 CF                                      iretd

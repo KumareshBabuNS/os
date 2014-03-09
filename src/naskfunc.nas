@@ -16,6 +16,8 @@
         GLOBAL  _io_load_eflags,_io_store_eflags
         GLOBAL  _load_gdtr,_load_idtr
         GLOBAL  _write_mem8		
+        GLOBAL  _asm_inthandler21,_asm_inthandler27,_asm_inthandler2c
+        EXTERN  _inthandler21,_inthandler27,_inthandler2c
 
 ;函数体
 
@@ -42,37 +44,37 @@ _io_stihlt:
     ; 输入输出函数 ;
         
 ; int io_in8(int port);
-_io_in8 :
+_io_in8:
         mov     edx, [esp+4]
         mov     eax, 0
         in      al, dx
         ret
 ; int io_in16(int port);
-_io_in16 :
+_io_in16:
         mov     edx, [esp+4]
         mov     eax, 0
         in      ax, dx
         ret
 ; int io_in32(int port);
-_io_in32 :
+_io_in32:
         mov     edx, [esp+4]
         mov     eax, 0
         in      eax, dx
         ret
 ; void io_out8(int port,int data);
-_io_out8 :
+_io_out8:
         mov     edx, [esp+4]
         mov     al, [esp+8]
         out     dx, al
         ret
 ; void io_out16(int port,int data);
-_io_out16 :
+_io_out16:
         mov     edx, [esp+4]
         mov     ax, [esp+8]
         out     dx, ax
         ret
 ; void io_out32(int port,int data);
-_io_out8 :
+_io_out8:
         mov     edx, [esp+4]
         mov     eax, [esp+8]
         out     dx, eax
@@ -109,3 +111,50 @@ _write_mem8:
         mov     [ecx], al
         ret
 
+_asm_inthandler21:
+        push    es
+        push    ds
+        pushad
+        mov     eax, esp
+        push    eax
+        mov     ax, ss
+        mov     ds, ax
+        mov     es, ax
+        call    _inthandler21
+        pop     eax
+        popad
+        pop     ds
+        pop     es
+        iretd
+
+_asm_inthandler27:
+        push    es
+        push    ds
+        pushad
+        mov     eax, esp
+        push    eax
+        mov     ax, ss
+        mov     ds, ax
+        mov     es, ax
+        call    _inthandler27
+        pop     eax
+        popad
+        pop     ds
+        pop     es
+        iretd
+
+_asm_inthandler2c:
+        push    es
+        push    ds
+        pushad
+        mov     eax, esp
+        push    eax
+        mov     ax, ss
+        mov     ds, ax
+        mov     es, ax
+        call    _inthandler2c
+        pop     eax
+        popad
+        pop     ds
+        pop     es
+        iretd
