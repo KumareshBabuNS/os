@@ -272,18 +272,22 @@ void init_pic()
 
     return;
 }
-
+#define PORT_KEYDAT     0x0060
 void inthandler21(int *esp)
 {
     /* 键盘中断处理函数 */
+    int data;
+    char StrNum[5];
     struct BOOTINFO *binfo = (struct BOOTINFO*) ADR_BOOTINFO;
-    boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
-    putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 21 (IRQ-1) : PS/2 keyboard");
-    for (;;)
-    {
-        /* code */
-        io_hlt();
-    }
+    io_out8(PIC0_OCW2, 0x61); /* 通知CPU中断请求已经处理完 */
+    data = io_in8(PORT_KEYDAT);
+    boxfill8(binfo->vram, binfo->scrnx, COL8_000084, 0, 0, 32 - 1, 16 - 1);
+    init_screen(binfo->vram,binfo->scrnx,binfo->scrny);
+    sprintf(StrNum, "%02X", data);
+    putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, StrNum);
+    
+    //putfont8_asc(binfo->vram, binfo->scrnx, 0, 10, COL8_FFFFFF, "INT 21 (IRQ-1) : PS/2 keyboard");
+    return;
 }
 
 void inthandler2c(int *esp)
@@ -292,9 +296,7 @@ void inthandler2c(int *esp)
     struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
     boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
     putfont8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 2C (IRQ-12) : PS/2 mouse");
-    for (;;) {
-        io_hlt();
-    }
+    
 }
 
 void inthandler27(int *esp)                                

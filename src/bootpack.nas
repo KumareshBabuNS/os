@@ -14,7 +14,8 @@
 	EXTERN	_asm_inthandler27
 	EXTERN	_asm_inthandler2c
 	EXTERN	_load_idtr
-	EXTERN	_io_hlt
+	EXTERN	_io_in8
+	EXTERN	_sprintf
 [FILE "bootpack.c"]
 [SECTION .text]
 	GLOBAL	_HariMain
@@ -760,22 +761,42 @@ _init_pic:
 	RET
 [SECTION .data]
 LC0:
-	DB	"INT 21 (IRQ-1) : PS/2 keyboard",0x00
+	DB	"%02X",0x00
 [SECTION .text]
 	GLOBAL	_inthandler21
 _inthandler21:
 	PUSH	EBP
 	MOV	EBP,ESP
+	PUSH	EBX
+	SUB	ESP,16
+	PUSH	97
+	PUSH	32
+	CALL	_io_out8
+	PUSH	96
+	CALL	_io_in8
 	PUSH	15
-	PUSH	255
+	PUSH	31
+	MOV	EBX,EAX
 	PUSH	0
 	PUSH	0
-	PUSH	0
+	PUSH	12
 	MOVSX	EAX,WORD [4084]
 	PUSH	EAX
 	PUSH	DWORD [4088]
 	CALL	_boxfill8
+	ADD	ESP,40
+	MOVSX	EAX,WORD [4086]
+	PUSH	EAX
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_init_screen
+	PUSH	EBX
 	PUSH	LC0
+	LEA	EBX,DWORD [-20+EBP]
+	PUSH	EBX
+	CALL	_sprintf
+	PUSH	EBX
 	PUSH	7
 	PUSH	0
 	PUSH	0
@@ -783,10 +804,9 @@ _inthandler21:
 	PUSH	EAX
 	PUSH	DWORD [4088]
 	CALL	_putfont8_asc
-	ADD	ESP,52
-L109:
-	CALL	_io_hlt
-	JMP	L109
+	MOV	EBX,DWORD [-4+EBP]
+	LEAVE
+	RET
 [SECTION .data]
 LC1:
 	DB	"INT 2C (IRQ-12) : PS/2 mouse",0x00
@@ -812,10 +832,8 @@ _inthandler2c:
 	PUSH	EAX
 	PUSH	DWORD [4088]
 	CALL	_putfont8_asc
-	ADD	ESP,52
-L113:
-	CALL	_io_hlt
-	JMP	L113
+	LEAVE
+	RET
 	GLOBAL	_inthandler27
 _inthandler27:
 	PUSH	EBP
