@@ -1,4 +1,7 @@
 #include <stdio.h>
+#define TRUE 			0x1
+#define FALSE 			0x0
+
 #define COL8_000000		0
 #define COL8_FF0000		1
 #define COL8_00FF00		2
@@ -95,3 +98,14 @@ void asm_inthandler2c();
 #define PIC1_ICW2		0x00a1
 #define PIC1_ICW3		0x00a1
 #define PIC1_ICW4		0x00a1
+
+/***************** fifo.c ***************************/
+struct Queue8
+{
+	unsigned char *buf;
+	int toReadLoc, toWriteLoc, size, freeSpace, flag, empty;
+};
+void queue8_init(struct Queue8 *fifo, int size, unsigned char *buf);
+int queue8_push(struct Queue8 *fifo, unsigned char data);
+int queue8_pop(struct Queue8 *fifo);
+int queue8_status(struct Queue8 *fifo);
