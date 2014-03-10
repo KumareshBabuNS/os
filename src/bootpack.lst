@@ -6,65 +6,118 @@
      6 00000000                                 	EXTERN	_init_palette
      7 00000000                                 	EXTERN	_init_gdtidt
      8 00000000                                 	EXTERN	_init_pic
-     9 00000000                                 	EXTERN	_init_screen
-    10 00000000                                 	EXTERN	_init_mouse_cursor8
-    11 00000000                                 	EXTERN	_putblock8_8
-    12 00000000                                 	EXTERN	_io_out8
-    13 00000000                                 	EXTERN	_io_stihlt
-    14 00000000                                 [FILE "bootpack.c"]
-    15                                          [SECTION .text]
-    16 00000000                                 	GLOBAL	_HariMain
-    17 00000000                                 _HariMain:
-    18 00000000 55                              	PUSH	EBP
-    19 00000001 89 E5                           	MOV	EBP,ESP
-    20 00000003 57                              	PUSH	EDI
-    21 00000004 56                              	PUSH	ESI
-    22 00000005 53                              	PUSH	EBX
-    23 00000006 BB 00000002                     	MOV	EBX,2
-    24 0000000B 81 EC 00000108                  	SUB	ESP,264
-    25 00000011 E8 [00000000]                   	CALL	_init_palette
-    26 00000016 E8 [00000000]                   	CALL	_init_gdtidt
-    27 0000001B E8 [00000000]                   	CALL	_init_pic
-    28 00000020 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
-    29 00000027 0F BF 35 00000FF6               	MOVSX	ESI,WORD [4086]
-    30 0000002E 8D 48 F0                        	LEA	ECX,DWORD [-16+EAX]
-    31 00000031 56                              	PUSH	ESI
-    32 00000032 89 C8                           	MOV	EAX,ECX
-    33 00000034 B9 00000002                     	MOV	ECX,2
-    34 00000039 99                              	CDQ
-    35 0000003A F7 FB                           	IDIV	EBX
-    36 0000003C 8D 5E D4                        	LEA	EBX,DWORD [-44+ESI]
-    37 0000003F 89 C7                           	MOV	EDI,EAX
-    38 00000041 89 D8                           	MOV	EAX,EBX
-    39 00000043 8D B5 FFFFFEF4                  	LEA	ESI,DWORD [-268+EBP]
-    40 00000049 99                              	CDQ
-    41 0000004A F7 F9                           	IDIV	ECX
-    42 0000004C 0F BF 15 00000FF4               	MOVSX	EDX,WORD [4084]
-    43 00000053 52                              	PUSH	EDX
-    44 00000054 89 C3                           	MOV	EBX,EAX
-    45 00000056 FF 35 00000FF8                  	PUSH	DWORD [4088]
-    46 0000005C E8 [00000000]                   	CALL	_init_screen
-    47 00000061 6A 0E                           	PUSH	14
-    48 00000063 56                              	PUSH	ESI
-    49 00000064 E8 [00000000]                   	CALL	_init_mouse_cursor8
-    50 00000069 6A 10                           	PUSH	16
-    51 0000006B 56                              	PUSH	ESI
-    52 0000006C 53                              	PUSH	EBX
-    53 0000006D 57                              	PUSH	EDI
-    54 0000006E 6A 10                           	PUSH	16
-    55 00000070 6A 10                           	PUSH	16
-    56 00000072 0F BF 15 00000FF4               	MOVSX	EDX,WORD [4084]
-    57 00000079 52                              	PUSH	EDX
-    58 0000007A FF 35 00000FF8                  	PUSH	DWORD [4088]
-    59 00000080 E8 [00000000]                   	CALL	_putblock8_8
-    60 00000085 83 C4 34                        	ADD	ESP,52
-    61 00000088 68 000000F9                     	PUSH	249
-    62 0000008D 6A 21                           	PUSH	33
-    63 0000008F E8 [00000000]                   	CALL	_io_out8
-    64 00000094 68 000000EF                     	PUSH	239
-    65 00000099 68 000000A1                     	PUSH	161
-    66 0000009E E8 [00000000]                   	CALL	_io_out8
-    67 000000A3 83 C4 10                        	ADD	ESP,16
-    68 000000A6                                 L2:
-    69 000000A6 E8 [00000000]                   	CALL	_io_stihlt
-    70 000000AB EB F9                           	JMP	L2
+     9 00000000                                 	EXTERN	_keyBoardBuffer
+    10 00000000                                 	EXTERN	_queue8_init
+    11 00000000                                 	EXTERN	_init_screen
+    12 00000000                                 	EXTERN	_init_mouse_cursor8
+    13 00000000                                 	EXTERN	_putblock8_8
+    14 00000000                                 	EXTERN	_io_out8
+    15 00000000                                 	EXTERN	_io_cli
+    16 00000000                                 	EXTERN	_queue8_status
+    17 00000000                                 	EXTERN	_queue8_pop
+    18 00000000                                 	EXTERN	_boxfill8
+    19 00000000                                 	EXTERN	_sprintf
+    20 00000000                                 	EXTERN	_putfont8_asc
+    21 00000000                                 	EXTERN	_io_stihlt
+    22 00000000                                 [FILE "bootpack.c"]
+    23                                          [SECTION .data]
+    24 00000000                                 LC0:
+    25 00000000 25 30 32 58 00                  	DB	"%02X",0x00
+    26                                          [SECTION .text]
+    27 00000000                                 	GLOBAL	_HariMain
+    28 00000000                                 _HariMain:
+    29 00000000 55                              	PUSH	EBP
+    30 00000001 89 E5                           	MOV	EBP,ESP
+    31 00000003 57                              	PUSH	EDI
+    32 00000004 56                              	PUSH	ESI
+    33 00000005 BE 00000002                     	MOV	ESI,2
+    34 0000000A 53                              	PUSH	EBX
+    35 0000000B 81 EC 00000198                  	SUB	ESP,408
+    36 00000011 E8 [00000000]                   	CALL	_init_palette
+    37 00000016 E8 [00000000]                   	CALL	_init_gdtidt
+    38 0000001B E8 [00000000]                   	CALL	_init_pic
+    39 00000020 8D 45 D4                        	LEA	EAX,DWORD [-44+EBP]
+    40 00000023 50                              	PUSH	EAX
+    41 00000024 6A 20                           	PUSH	32
+    42 00000026 68 [00000000]                   	PUSH	_keyBoardBuffer
+    43 0000002B E8 [00000000]                   	CALL	_queue8_init
+    44 00000030 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
+    45 00000037 0F BF 15 00000FF6               	MOVSX	EDX,WORD [4086]
+    46 0000003E 8D 48 F0                        	LEA	ECX,DWORD [-16+EAX]
+    47 00000041 89 95 FFFFFE60                  	MOV	DWORD [-416+EBP],EDX
+    48 00000047 89 C8                           	MOV	EAX,ECX
+    49 00000049 8B 9D FFFFFE60                  	MOV	EBX,DWORD [-416+EBP]
+    50 0000004F 99                              	CDQ
+    51 00000050 F7 FE                           	IDIV	ESI
+    52 00000052 83 EB 2C                        	SUB	EBX,44
+    53 00000055 89 C7                           	MOV	EDI,EAX
+    54 00000057 89 D8                           	MOV	EAX,EBX
+    55 00000059 99                              	CDQ
+    56 0000005A F7 FE                           	IDIV	ESI
+    57 0000005C FF B5 FFFFFE60                  	PUSH	DWORD [-416+EBP]
+    58 00000062 89 C3                           	MOV	EBX,EAX
+    59 00000064 8D B5 FFFFFED4                  	LEA	ESI,DWORD [-300+EBP]
+    60 0000006A 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
+    61 00000071 50                              	PUSH	EAX
+    62 00000072 FF 35 00000FF8                  	PUSH	DWORD [4088]
+    63 00000078 E8 [00000000]                   	CALL	_init_screen
+    64 0000007D 6A 0E                           	PUSH	14
+    65 0000007F 56                              	PUSH	ESI
+    66 00000080 E8 [00000000]                   	CALL	_init_mouse_cursor8
+    67 00000085 83 C4 20                        	ADD	ESP,32
+    68 00000088 6A 10                           	PUSH	16
+    69 0000008A 56                              	PUSH	ESI
+    70 0000008B 53                              	PUSH	EBX
+    71 0000008C 57                              	PUSH	EDI
+    72 0000008D 6A 10                           	PUSH	16
+    73 0000008F 6A 10                           	PUSH	16
+    74 00000091 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
+    75 00000098 50                              	PUSH	EAX
+    76 00000099 FF 35 00000FF8                  	PUSH	DWORD [4088]
+    77 0000009F E8 [00000000]                   	CALL	_putblock8_8
+    78 000000A4 83 C4 20                        	ADD	ESP,32
+    79 000000A7 68 000000F9                     	PUSH	249
+    80 000000AC 6A 21                           	PUSH	33
+    81 000000AE E8 [00000000]                   	CALL	_io_out8
+    82 000000B3 68 000000EF                     	PUSH	239
+    83 000000B8 68 000000A1                     	PUSH	161
+    84 000000BD E8 [00000000]                   	CALL	_io_out8
+    85 000000C2 83 C4 10                        	ADD	ESP,16
+    86 000000C5                                 L2:
+    87 000000C5 E8 [00000000]                   	CALL	_io_cli
+    88 000000CA 68 [00000000]                   	PUSH	_keyBoardBuffer
+    89 000000CF E8 [00000000]                   	CALL	_queue8_status
+    90 000000D4 5A                              	POP	EDX
+    91 000000D5 85 C0                           	TEST	EAX,EAX
+    92 000000D7 7E 5D                           	JLE	L7
+    93 000000D9 68 [00000000]                   	PUSH	_keyBoardBuffer
+    94 000000DE E8 [00000000]                   	CALL	_queue8_pop
+    95 000000E3 6A 0F                           	PUSH	15
+    96 000000E5 6A 1F                           	PUSH	31
+    97 000000E7 89 C3                           	MOV	EBX,EAX
+    98 000000E9 6A 00                           	PUSH	0
+    99 000000EB 6A 00                           	PUSH	0
+   100 000000ED 6A 0E                           	PUSH	14
+   101 000000EF 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
+   102 000000F6 50                              	PUSH	EAX
+   103 000000F7 FF 35 00000FF8                  	PUSH	DWORD [4088]
+   104 000000FD E8 [00000000]                   	CALL	_boxfill8
+   105 00000102 83 C4 20                        	ADD	ESP,32
+   106 00000105 53                              	PUSH	EBX
+   107 00000106 8D 9D FFFFFE64                  	LEA	EBX,DWORD [-412+EBP]
+   108 0000010C 68 [00000000]                   	PUSH	LC0
+   109 00000111 53                              	PUSH	EBX
+   110 00000112 E8 [00000000]                   	CALL	_sprintf
+   111 00000117 53                              	PUSH	EBX
+   112 00000118 6A 03                           	PUSH	3
+   113 0000011A 6A 00                           	PUSH	0
+   114 0000011C 6A 00                           	PUSH	0
+   115 0000011E 0F BF 05 00000FF4               	MOVSX	EAX,WORD [4084]
+   116 00000125 50                              	PUSH	EAX
+   117 00000126 FF 35 00000FF8                  	PUSH	DWORD [4088]
+   118 0000012C E8 [00000000]                   	CALL	_putfont8_asc
+   119 00000131 83 C4 24                        	ADD	ESP,36
+   120 00000134 EB 8F                           	JMP	L2
+   121 00000136                                 L7:
+   122 00000136 E8 [00000000]                   	CALL	_io_stihlt
+   123 0000013B EB 88                           	JMP	L2

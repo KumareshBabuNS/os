@@ -30,8 +30,10 @@ int queue8_push(struct Queue8 *queue, unsigned char data)
 			/* code */
 			queue->buf[i - queue->toReadLoc] = queue->buf[i];
 		}
-		queue->toReadLoc = 0;
 		queue->toWriteLoc = queue->toWriteLoc - queue->toReadLoc;
+		queue->toReadLoc = 0;
+		
+		
 	}
 
 	queue->buf[queue->toWriteLoc] = data;
@@ -42,10 +44,19 @@ int queue8_push(struct Queue8 *queue, unsigned char data)
 
 int queue8_pop(struct Queue8 *queue)
 {
-	return TRUE;
+	/* 弹出 */
+	int temp;
+	temp = queue->buf[queue->toReadLoc];
+	queue->toReadLoc++;
+	queue->freeSpace++;
+
+	if(queue->freeSpace == queue->size)
+		queue->empty = TRUE;
+	return temp;
 }
 
 int queue8_status(struct Queue8 *queue)
 {
-	return TRUE;
+	/* empty */
+	return queue->size - queue->freeSpace;
 }

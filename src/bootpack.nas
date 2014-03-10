@@ -6,12 +6,23 @@
 	EXTERN	_init_palette
 	EXTERN	_init_gdtidt
 	EXTERN	_init_pic
+	EXTERN	_keyBoardBuffer
+	EXTERN	_queue8_init
 	EXTERN	_init_screen
 	EXTERN	_init_mouse_cursor8
 	EXTERN	_putblock8_8
 	EXTERN	_io_out8
+	EXTERN	_io_cli
+	EXTERN	_queue8_status
+	EXTERN	_queue8_pop
+	EXTERN	_boxfill8
+	EXTERN	_sprintf
+	EXTERN	_putfont8_asc
 	EXTERN	_io_stihlt
 [FILE "bootpack.c"]
+[SECTION .data]
+LC0:
+	DB	"%02X",0x00
 [SECTION .text]
 	GLOBAL	_HariMain
 _HariMain:
@@ -19,45 +30,52 @@ _HariMain:
 	MOV	EBP,ESP
 	PUSH	EDI
 	PUSH	ESI
+	MOV	ESI,2
 	PUSH	EBX
-	MOV	EBX,2
-	SUB	ESP,264
+	SUB	ESP,408
 	CALL	_init_palette
 	CALL	_init_gdtidt
 	CALL	_init_pic
+	LEA	EAX,DWORD [-44+EBP]
+	PUSH	EAX
+	PUSH	32
+	PUSH	_keyBoardBuffer
+	CALL	_queue8_init
 	MOVSX	EAX,WORD [4084]
-	MOVSX	ESI,WORD [4086]
+	MOVSX	EDX,WORD [4086]
 	LEA	ECX,DWORD [-16+EAX]
-	PUSH	ESI
+	MOV	DWORD [-416+EBP],EDX
 	MOV	EAX,ECX
-	MOV	ECX,2
+	MOV	EBX,DWORD [-416+EBP]
 	CDQ
-	IDIV	EBX
-	LEA	EBX,DWORD [-44+ESI]
+	IDIV	ESI
+	SUB	EBX,44
 	MOV	EDI,EAX
 	MOV	EAX,EBX
-	LEA	ESI,DWORD [-268+EBP]
 	CDQ
-	IDIV	ECX
-	MOVSX	EDX,WORD [4084]
-	PUSH	EDX
+	IDIV	ESI
+	PUSH	DWORD [-416+EBP]
 	MOV	EBX,EAX
+	LEA	ESI,DWORD [-300+EBP]
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
 	PUSH	DWORD [4088]
 	CALL	_init_screen
 	PUSH	14
 	PUSH	ESI
 	CALL	_init_mouse_cursor8
+	ADD	ESP,32
 	PUSH	16
 	PUSH	ESI
 	PUSH	EBX
 	PUSH	EDI
 	PUSH	16
 	PUSH	16
-	MOVSX	EDX,WORD [4084]
-	PUSH	EDX
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
 	PUSH	DWORD [4088]
 	CALL	_putblock8_8
-	ADD	ESP,52
+	ADD	ESP,32
 	PUSH	249
 	PUSH	33
 	CALL	_io_out8
@@ -66,5 +84,40 @@ _HariMain:
 	CALL	_io_out8
 	ADD	ESP,16
 L2:
+	CALL	_io_cli
+	PUSH	_keyBoardBuffer
+	CALL	_queue8_status
+	POP	EDX
+	TEST	EAX,EAX
+	JLE	L7
+	PUSH	_keyBoardBuffer
+	CALL	_queue8_pop
+	PUSH	15
+	PUSH	31
+	MOV	EBX,EAX
+	PUSH	0
+	PUSH	0
+	PUSH	14
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_boxfill8
+	ADD	ESP,32
+	PUSH	EBX
+	LEA	EBX,DWORD [-412+EBP]
+	PUSH	LC0
+	PUSH	EBX
+	CALL	_sprintf
+	PUSH	EBX
+	PUSH	3
+	PUSH	0
+	PUSH	0
+	MOVSX	EAX,WORD [4084]
+	PUSH	EAX
+	PUSH	DWORD [4088]
+	CALL	_putfont8_asc
+	ADD	ESP,36
+	JMP	L2
+L7:
 	CALL	_io_stihlt
 	JMP	L2
