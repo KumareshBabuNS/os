@@ -11,44 +11,51 @@ _HariMain:
 	movl	%esp, %ebp
 	pushl	%edi
 	pushl	%esi
-	movl	$2, %esi
 	pushl	%ebx
-	subl	$408, %esp
+	movl	$2, %ebx
+	subl	$648, %esp
 	call	_init_palette
 	call	_init_gdtidt
 	call	_init_pic
+	call	_init_keyboard
+	call	_enable_mouse
 	leal	-44(%ebp), %eax
 	pushl	%eax
 	pushl	$32
 	pushl	$_keyBoardBuffer
 	call	_queue8_init
+	leal	-172(%ebp), %eax
+	pushl	%eax
+	pushl	$128
+	pushl	$_mouseBuffer
+	call	_queue8_init
 	movswl	4084,%eax
 	movswl	4086,%edx
 	leal	-16(%eax), %ecx
-	movl	%edx, -416(%ebp)
+	movl	%edx, -656(%ebp)
 	movl	%ecx, %eax
-	movl	-416(%ebp), %ebx
+	movl	-656(%ebp), %esi
 	cltd
-	idivl	%esi
-	subl	$44, %ebx
+	idivl	%ebx
+	subl	$44, %esi
 	movl	%eax, %edi
-	movl	%ebx, %eax
+	movl	%esi, %eax
 	cltd
-	idivl	%esi
-	pushl	-416(%ebp)
-	movl	%eax, %ebx
-	leal	-300(%ebp), %esi
+	idivl	%ebx
+	pushl	-656(%ebp)
+	movl	%eax, %esi
+	leal	-428(%ebp), %ebx
 	movswl	4084,%eax
 	pushl	%eax
 	pushl	4088
 	call	_init_screen
+	addl	$36, %esp
 	pushl	$14
-	pushl	%esi
-	call	_init_mouse_cursor8
-	addl	$32, %esp
-	pushl	$16
-	pushl	%esi
 	pushl	%ebx
+	call	_init_mouse_cursor8
+	pushl	$16
+	pushl	%ebx
+	pushl	%esi
 	pushl	%edi
 	pushl	$16
 	pushl	$16
@@ -56,7 +63,7 @@ _HariMain:
 	pushl	%eax
 	pushl	4088
 	call	_putblock8_8
-	addl	$32, %esp
+	addl	$40, %esp
 	pushl	$249
 	pushl	$33
 	call	_io_out8
@@ -68,9 +75,54 @@ L2:
 	call	_io_cli
 	pushl	$_keyBoardBuffer
 	call	_queue8_status
+	pushl	$_mouseBuffer
+	movl	%eax, %ebx
+	call	_queue8_status
+	leal	(%eax,%ebx), %eax
+	popl	%ebx
+	popl	%esi
+	testl	%eax, %eax
+	jle	L11
+	pushl	$_keyBoardBuffer
+	call	_queue8_status
+	popl	%ecx
+	testl	%eax, %eax
+	jg	L12
+	pushl	$_mouseBuffer
+	call	_queue8_status
 	popl	%edx
 	testl	%eax, %eax
-	jle	L7
+	jle	L2
+	pushl	$_mouseBuffer
+	call	_queue8_pop
+	pushl	$35
+	pushl	$31
+	movl	%eax, %ebx
+	pushl	$20
+	pushl	$0
+	pushl	$14
+	movswl	4084,%eax
+	pushl	%eax
+	pushl	4088
+	call	_boxfill8
+	addl	$32, %esp
+	pushl	%ebx
+	leal	-652(%ebp), %ebx
+	pushl	$LC0
+	pushl	%ebx
+	call	_sprintf
+	pushl	%ebx
+	pushl	$3
+	pushl	$20
+L10:
+	pushl	$0
+	movswl	4084,%eax
+	pushl	%eax
+	pushl	4088
+	call	_putfont8_asc
+	addl	$36, %esp
+	jmp	L2
+L12:
 	pushl	$_keyBoardBuffer
 	call	_queue8_pop
 	pushl	$15
@@ -85,23 +137,64 @@ L2:
 	call	_boxfill8
 	addl	$32, %esp
 	pushl	%ebx
-	leal	-412(%ebp), %ebx
+	leal	-540(%ebp), %ebx
 	pushl	$LC0
 	pushl	%ebx
 	call	_sprintf
 	pushl	%ebx
 	pushl	$3
 	pushl	$0
-	pushl	$0
-	movswl	4084,%eax
-	pushl	%eax
-	pushl	4088
-	call	_putfont8_asc
-	addl	$36, %esp
-	jmp	L2
-L7:
+	jmp	L10
+L11:
 	call	_io_stihlt
 	jmp	L2
+	.balign 2
+.globl _wait_KBC_sendready
+	.def	_wait_KBC_sendready;	.scl	2;	.type	32;	.endef
+_wait_KBC_sendready:
+	pushl	%ebp
+	movl	%esp, %ebp
+L14:
+	pushl	$100
+	call	_io_in8
+	popl	%edx
+	andl	$2, %eax
+	jne	L14
+	leave
+	ret
+	.balign 2
+.globl _init_keyboard
+	.def	_init_keyboard;	.scl	2;	.type	32;	.endef
+_init_keyboard:
+	pushl	%ebp
+	movl	%esp, %ebp
+	call	_wait_KBC_sendready
+	pushl	$96
+	pushl	$100
+	call	_io_out8
+	call	_wait_KBC_sendready
+	pushl	$71
+	pushl	$96
+	call	_io_out8
+	leave
+	ret
+	.balign 2
+.globl _enable_mouse
+	.def	_enable_mouse;	.scl	2;	.type	32;	.endef
+_enable_mouse:
+	pushl	%ebp
+	movl	%esp, %ebp
+	call	_wait_KBC_sendready
+	pushl	$212
+	pushl	$100
+	call	_io_out8
+	call	_wait_KBC_sendready
+	pushl	$244
+	pushl	$96
+	call	_io_out8
+	leave
+	ret
+	.def	_io_in8;	.scl	2;	.type	32;	.endef
 	.def	_putfont8_asc;	.scl	2;	.type	32;	.endef
 	.def	_sprintf;	.scl	2;	.type	32;	.endef
 	.def	_boxfill8;	.scl	2;	.type	32;	.endef
@@ -114,6 +207,8 @@ L7:
 	.def	_init_mouse_cursor8;	.scl	2;	.type	32;	.endef
 	.def	_init_screen;	.scl	2;	.type	32;	.endef
 	.def	_queue8_init;	.scl	2;	.type	32;	.endef
+	.def	_enable_mouse;	.scl	2;	.type	32;	.endef
+	.def	_init_keyboard;	.scl	2;	.type	32;	.endef
 	.def	_init_pic;	.scl	2;	.type	32;	.endef
 	.def	_init_gdtidt;	.scl	2;	.type	32;	.endef
 	.def	_init_palette;	.scl	2;	.type	32;	.endef
